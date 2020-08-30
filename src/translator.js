@@ -31,16 +31,63 @@ class Translator extends React.Component {
         localStorage.setItem("trans_rules",JSON.stringify(prevRules));
     }
 
-    transalte = () => {
+    translate = () => {
         let hs = document.getElementById("hindi_sentence").value.split(" ");
-        let as = hs.map((val) => {
-            if(val in this.state.rules)
-                return (<b style={{color: '#dc3545'}} title={val}>{this.state.rules[val][0]} </b>);
-            return (<span>{val} </span>);
+        let as = hs.map(ele => {
+            return {word: ele, part: 0};
         });
+
+        const max_phrase_length = 4;
+        for(let l=max_phrase_length;l>=1;l--) {
+            for(let i=0;i+l-1<as.length;i++) {
+                const phrase_val = as.slice(i,i+l).map(ele => ele.word).join(" ");
+                let flag = true;
+                
+                for(let marker=i;marker<=i+l-1;marker++) {
+                    if(as[marker].part!==0) {
+                        flag=false;
+                        break;
+                    }
+                }
+
+                if(flag && phrase_val in this.state.rules) {
+                    as.splice(i,l,
+                        ...this.state.rules[phrase_val][0].split(" ").map(ele => {
+                            return {word: ele, part: l};
+                        }));
+                    // console.log(as);
+                }
+
+
+            }
+        }
 
         hs = hs.map((val) => {
             return (<span>{val} </span>);
+        });
+
+        as = as.map(val => {
+            let colorCode = "black";
+            switch(val.part) {
+                case 0:
+                    colorCode = "black";
+                    break;
+                case 1:
+                    colorCode = "green";
+                    break;
+                case 2:
+                    colorCode = "blue";
+                    break;
+                case 3:
+                    colorCode = "red";
+                    break;
+                case 4:
+                    colorCode = "orange";
+                    break;
+                default:
+                    break; 
+            }
+            return (<span title={`${val.part} word(s) long phrase`} style={{color: colorCode}}>{val.word} </span>);
         });
 
         this.setState({hs: hs, as: as});
@@ -64,7 +111,7 @@ class Translator extends React.Component {
                 </div>
                 <div className="mt-3 row d-flex justify-content-center">
                     <div className="col-6 text-center">
-                        <Button onClick={() => {this.transalte()}}>translate</Button>
+                        <Button onClick={() => {this.translate()}}>translate</Button>
                     </div>
                 </div>
                 <div className="mt-3 row d-flex justify-content-center">
